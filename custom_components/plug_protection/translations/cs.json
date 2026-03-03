@@ -1,0 +1,43 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Nastavit ochranu zásuvky",
+        "description": "Ochrana chytré zásuvky proti vypnutí při běžícím spotřebiči.",
+        "data": {
+          "plug_entity": "Entita zásuvky (switch)",
+          "power_sensor": "Senzor příkonu (W)",
+          "power_threshold": "Mezní příkon (W)",
+          "cooldown_seconds": "Prodleva po poklesu příkonu (sekundy)",
+          "enable_notification": "Zobrazit notifikaci při zablokování"
+        },
+        "data_description": {
+          "plug_entity": "Switch entita chytré zásuvky, kterou chcete chránit.",
+          "power_sensor": "Senzor udávající aktuální příkon ve wattech.",
+          "power_threshold": "Ochrana se aktivuje při překročení této hodnoty. Typicky: 5-10 W pračka, 15-30 W 3D tiskárna.",
+          "cooldown_seconds": "Po poklesu příkonu pod práh zůstane ochrana aktivní po tuto dobu. Chrání proti pauzám v cyklu spotřebiče.",
+          "enable_notification": "Zobrazí persistent notifikaci při zablokování pokusu o vypnutí."
+        }
+      }
+    },
+    "error": {
+      "same_entity": "Zásuvka a senzor příkonu musí být různé entity."
+    },
+    "abort": {
+      "already_configured": "Tato zásuvka je již chráněná."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Nastavení ochrany zásuvky",
+        "description": "Upravte parametry ochrany. Změny se projeví okamžitě.",
+        "data": {
+          "power_threshold": "Mezní příkon (W)",
+          "cooldown_seconds": "Prodleva po poklesu příkonu (sekundy)",
+          "enable_notification": "Zobrazit notifikaci při zablokování"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,31 @@
+force_off:
+  name: Force Off
+  description: >-
+    Force turn off a protected plug, bypassing all protection.
+    Use with caution – this will turn off the plug regardless of
+    current power consumption or cooldown state.
+  fields:
+    original_entity:
+      name: Original plug entity
+      description: The entity ID of the original (wrapped) plug switch.
+      required: true
+      example: "switch.washing_machine_plug"
+      selector:
+        entity:
+          domain: switch
+
+reset_cooldown:
+  name: Reset Cooldown
+  description: >-
+    Reset the cooldown timer for a protected plug, immediately
+    transitioning it to idle state. The plug can then be turned
+    off normally.
+  fields:
+    original_entity:
+      name: Original plug entity
+      description: The entity ID of the original (wrapped) plug switch.
+      required: true
+      example: "switch.washing_machine_plug"
+      selector:
+        entity:
+          domain: switch

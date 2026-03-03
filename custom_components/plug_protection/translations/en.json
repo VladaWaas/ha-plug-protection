@@ -1,0 +1,43 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Set up Plug Protection",
+        "description": "Protect a smart plug from being turned off while an appliance is running.",
+        "data": {
+          "plug_entity": "Plug switch entity",
+          "power_sensor": "Power sensor (W)",
+          "power_threshold": "Power threshold (W)",
+          "cooldown_seconds": "Cooldown after power drops (seconds)",
+          "enable_notification": "Show notification when blocked"
+        },
+        "data_description": {
+          "plug_entity": "The switch entity of the smart plug to protect.",
+          "power_sensor": "Sensor reporting current power consumption in Watts.",
+          "power_threshold": "Protection activates above this value. Typical: 5-10 W for washing machines, 15-30 W for 3D printers.",
+          "cooldown_seconds": "After power drops below threshold, protection stays active for this duration.",
+          "enable_notification": "Display a persistent notification when a turn-off attempt is blocked."
+        }
+      }
+    },
+    "error": {
+      "same_entity": "Plug entity and power sensor must be different entities."
+    },
+    "abort": {
+      "already_configured": "This plug is already protected."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Plug Protection Settings",
+        "description": "Adjust protection parameters. Changes take effect immediately.",
+        "data": {
+          "power_threshold": "Power threshold (W)",
+          "cooldown_seconds": "Cooldown after power drops (seconds)",
+          "enable_notification": "Show notification when blocked"
+        }
+      }
+    }
+  }
+}
