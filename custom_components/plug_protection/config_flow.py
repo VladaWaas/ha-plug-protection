@@ -124,7 +124,7 @@ class PlugProtectionConfigFlow(ConfigFlow, domain=DOMAIN):
         config_entry: ConfigEntry,
     ) -> OptionsFlow:
         """Get the options flow handler."""
-        return PlugProtectionOptionsFlow(config_entry)
+        return PlugProtectionOptionsFlow()
 
 
 # ─────────────────────────────────────────────────────────────
@@ -134,9 +134,6 @@ class PlugProtectionConfigFlow(ConfigFlow, domain=DOMAIN):
 class PlugProtectionOptionsFlow(OptionsFlow):
     """Handle options flow – edit threshold, cooldown, notifications."""
 
-    def __init__(self, config_entry: ConfigEntry) -> None:
-        self._config_entry = config_entry
-
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None
     ) -> FlowResult:
@@ -145,8 +142,8 @@ class PlugProtectionOptionsFlow(OptionsFlow):
             return self.async_create_entry(title="", data=user_input)
 
         current = {
-            **self._config_entry.data,
-            **self._config_entry.options,
+            **self.config_entry.data,
+            **self.config_entry.options,
         }
 
         data_schema = vol.Schema(

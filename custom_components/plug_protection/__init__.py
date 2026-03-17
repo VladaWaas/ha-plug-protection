@@ -324,7 +324,7 @@ class ProtectionManager:
         if new_state is None:
             return
 
-        # Plug turned off
+        # Plug turned off while protected → BLOCK
         if new_state.state == STATE_OFF and (
             old_state is None or old_state.state == STATE_ON
         ):
@@ -338,6 +338,10 @@ class ProtectionManager:
                 )
                 self._last_block_time = datetime.now()
                 self.hass.async_create_task(self._async_revert_off())
+
+        # Always notify entities about plug state changes
+        # so the protected switch mirrors the original state
+        self._fire_update()
 
     @callback
     def _async_on_power_change(self, event: Event) -> None:
