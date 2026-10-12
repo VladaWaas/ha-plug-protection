@@ -9,35 +9,95 @@
           "power_sensor": "Senzor příkonu (W)",
           "power_threshold": "Mezní příkon (W)",
           "cooldown_seconds": "Prodleva po poklesu příkonu (sekundy)",
-          "enable_notification": "Zobrazit notifikaci při zablokování"
+          "enable_notification": "Zobrazit notifikaci při zablokování",
+          "raise_on_block": "Hlásit chybu při zablokovaném vypnutí"
         },
         "data_description": {
           "plug_entity": "Switch entita chytré zásuvky, kterou chcete chránit.",
           "power_sensor": "Senzor udávající aktuální příkon ve wattech.",
           "power_threshold": "Ochrana se aktivuje při překročení této hodnoty. Typicky: 5-10 W pračka, 15-30 W 3D tiskárna.",
           "cooldown_seconds": "Po poklesu příkonu pod práh zůstane ochrana aktivní po tuto dobu. Chrání proti pauzám v cyklu spotřebiče.",
-          "enable_notification": "Zobrazí persistent notifikaci při zablokování pokusu o vypnutí."
+          "enable_notification": "Zobrazí notifikaci při zablokování pokusu o vypnutí.",
+          "raise_on_block": "Pokud je zapnuto, vypnutí chráněného vypínače při aktivní ochraně skončí chybou (automatizace se na této akci zastaví). Pokud je vypnuto, příkaz se tiše ignoruje."
+        }
+      },
+      "reconfigure": {
+        "title": "Změnit chráněnou zásuvku",
+        "description": "Vyberte jinou zásuvku nebo senzor příkonu. Práh a prodleva se mění v Konfigurovat.",
+        "data": {
+          "plug_entity": "Entita zásuvky (switch)",
+          "power_sensor": "Senzor příkonu (W)"
         }
       }
     },
     "error": {
-      "same_entity": "Zásuvka a senzor příkonu musí být různé entity."
+      "already_configured": "Tato zásuvka je již chráněná."
     },
     "abort": {
-      "already_configured": "Tato zásuvka je již chráněná."
+      "already_configured": "Tato zásuvka je již chráněná.",
+      "reconfigure_successful": "Plug Protection byl přenastaven."
     }
   },
   "options": {
     "step": {
       "init": {
         "title": "Nastavení ochrany zásuvky",
-        "description": "Upravte parametry ochrany. Změny se projeví okamžitě.",
+        "description": "Upravte parametry ochrany. Po uložení se integrace načte znovu, běžící prodleva zůstane zachována.",
         "data": {
           "power_threshold": "Mezní příkon (W)",
           "cooldown_seconds": "Prodleva po poklesu příkonu (sekundy)",
-          "enable_notification": "Zobrazit notifikaci při zablokování"
+          "enable_notification": "Zobrazit notifikaci při zablokování",
+          "raise_on_block": "Hlásit chybu při zablokovaném vypnutí"
+        },
+        "data_description": {
+          "raise_on_block": "Pokud je zapnuto, vypnutí chráněného vypínače při aktivní ochraně skončí chybou (automatizace se na této akci zastaví). Pokud je vypnuto, příkaz se tiše ignoruje."
         }
       }
+    }
+  },
+  "entity": {
+    "switch": {
+      "protected_switch": {
+        "name": "Chráněný vypínač"
+      },
+      "protection_enabled": {
+        "name": "Ochrana zapnuta"
+      }
+    },
+    "sensor": {
+      "protection_status": {
+        "name": "Stav ochrany",
+        "state": {
+          "active": "Aktivní",
+          "cooldown": "Doběh",
+          "idle": "Nečinná",
+          "disabled": "Vypnuta"
+        }
+      },
+      "cooldown_end": {
+        "name": "Konec doběhu"
+      }
+    }
+  },
+  "services": {
+    "force_off": {
+      "name": "Vynutit vypnutí",
+      "description": "Vypne chráněnou zásuvku bez ohledu na ochranu. Používejte opatrně – zásuvka se vypne bez ohledu na příkon a doběh."
+    },
+    "reset_cooldown": {
+      "name": "Zrušit doběh",
+      "description": "Okamžitě ukončí běžící doběh, takže lze zásuvku normálně vypnout."
+    }
+  },
+  "exceptions": {
+    "turn_off_blocked": {
+      "message": "Vypnutí zásuvky {name} bylo zablokováno: spotřebič běží."
+    }
+  },
+  "issues": {
+    "entity_missing": {
+      "title": "Plug Protection: entita nenalezena",
+      "description": "Ochrana pro „{name}“ nemůže fungovat, protože tyto entity neexistují: {entities}.\n\nPokud byla zásuvka nebo její senzor příkonu vyměněna, otevřete Nastavení → Zařízení a služby → Plug Protection a použijte **Překonfigurovat** k výběru nových entit."
     }
   }
 }

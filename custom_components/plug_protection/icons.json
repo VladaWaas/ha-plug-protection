@@ -1,0 +1,35 @@
+{
+  "entity": {
+    "sensor": {
+      "protection_status": {
+        "default": "mdi:shield-outline",
+        "state": {
+          "active": "mdi:shield-lock",
+          "cooldown": "mdi:timer-sand",
+          "idle": "mdi:shield-off-outline",
+          "disabled": "mdi:shield-off"
+        }
+      },
+      "cooldown_end": {
+        "default": "mdi:timer-sand"
+      }
+    },
+    "switch": {
+      "protection_enabled": {
+        "default": "mdi:shield-off",
+        "state": {
+          "on": "mdi:shield-check",
+          "off": "mdi:shield-off"
+        }
+      }
+    }
+  },
+  "services": {
+    "force_off": {
+      "service": "mdi:power-plug-off"
+    },
+    "reset_cooldown": {
+      "service": "mdi:timer-off"
+    }
+  }
+}

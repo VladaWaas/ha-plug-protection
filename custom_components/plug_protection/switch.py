@@ -1,99 +1,74 @@
-"""Protected switch entity for Plug Protection."""
+"""Switch entities for Plug Protection."""
 
 from __future__ import annotations
 
-import logging
+from typing import Any
 
 from homeassistant.components.switch import SwitchEntity
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import STATE_ON, STATE_UNAVAILABLE, STATE_UNKNOWN
-from homeassistant.core import HomeAssistant, callback
+from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import ServiceValidationError
+from homeassistant.helpers import entity_platform
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from . import ProtectionManager
+from . import PlugProtectionConfigEntry
 from .const import (
-    ATTR_COOLDOWN_REMAINING,
+    ATTR_COOLDOWN_END,
     ATTR_COOLDOWN_TOTAL,
     ATTR_CURRENT_POWER,
+    ATTR_ENABLED,
     ATTR_LAST_BLOCK_TIME,
     ATTR_ORIGINAL_ENTITY,
     ATTR_POWER_THRESHOLD,
     ATTR_PROTECTED,
     ATTR_PROTECTION_STATE,
-    CONF_PLUG_ENTITY,
     DOMAIN,
+    SERVICE_FORCE_OFF,
+    SERVICE_RESET_COOLDOWN,
 )
-
-_LOGGER = logging.getLogger(__name__)
+from .entity import ProtectionEntity
+from .manager import ProtectionManager
 
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    entry: ConfigEntry,
+    entry: PlugProtectionConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
-    """Set up the protected switch from a config entry."""
-    manager: ProtectionManager = hass.data[DOMAIN][entry.entry_id]
-    async_add_entities([ProtectedPlugSwitch(manager, entry)])
+    """Set up the switch entities from a config entry."""
+    manager = entry.runtime_data
+    async_add_entities([ProtectedPlugSwitch(manager), ProtectionEnabledSwitch(manager)])
+
+    platform = entity_platform.async_get_current_platform()
+    platform.async_register_entity_service(SERVICE_FORCE_OFF, None, "async_force_off")
+    platform.async_register_entity_service(
+        SERVICE_RESET_COOLDOWN, None, "async_reset_cooldown"
+    )
 
 
-class ProtectedPlugSwitch(SwitchEntity):
-    """Switch entity that wraps an original plug with protection logic."""
+class ProtectedPlugSwitch(ProtectionEntity, SwitchEntity):
+    """Switch that wraps the original plug with protection logic."""
 
-    _attr_has_entity_name = True
-    _attr_should_poll = False
+    _attr_translation_key = "protected_switch"
+    _unrecorded_attributes = frozenset(
+        {ATTR_CURRENT_POWER, ATTR_COOLDOWN_END, ATTR_LAST_BLOCK_TIME}
+    )
 
-    def __init__(
-        self, manager: ProtectionManager, entry: ConfigEntry
-    ) -> None:
-        self._manager = manager
-        self._entry = entry
-        self._plug_entity = entry.data[CONF_PLUG_ENTITY]
-
-        self._attr_unique_id = f"{entry.entry_id}_protected_switch"
-        self._attr_name = "Protected switch"
-        self._attr_device_info = {
-            "identifiers": {(DOMAIN, entry.entry_id)},
-            "name": entry.title,
-            "manufacturer": "Plug Protection",
-            "model": "Protected Smart Plug",
-            "sw_version": "1.0.0",
-        }
-
-    async def async_added_to_hass(self) -> None:
-        """Register update callback when entity is added."""
-        self._manager.async_add_update_callback(self._on_manager_update)
-
-    async def async_will_remove_from_hass(self) -> None:
-        """Clean up callback when entity is removed."""
-        self._manager.async_remove_update_callback(self._on_manager_update)
-
-    @callback
-    def _on_manager_update(self) -> None:
-        """Handle manager state update."""
-        self.async_write_ha_state()
-
-    # ── State ────────────────────────────────────────────────
+    def __init__(self, manager: ProtectionManager) -> None:
+        super().__init__(manager, "protected_switch")
 
     @property
     def is_on(self) -> bool | None:
         """Return true if the original plug is on."""
-        state = self.hass.states.get(self._plug_entity)
-        if state is None or state.state in (
-            STATE_UNAVAILABLE,
-            STATE_UNKNOWN,
-        ):
+        state = self.hass.states.get(self._manager.plug_entity)
+        if state is None or state.state in (STATE_UNAVAILABLE, STATE_UNKNOWN):
             return None
         return state.state == STATE_ON
 
     @property
     def available(self) -> bool:
-        """Return True if the original plug is available."""
-        state = self.hass.states.get(self._plug_entity)
-        return state is not None and state.state not in (
-            STATE_UNAVAILABLE,
-            STATE_UNKNOWN,
-        )
+        """Available while the original plug is available."""
+        return self._manager.plug_available
 
     @property
     def icon(self) -> str:
@@ -104,73 +79,73 @@ class ProtectedPlugSwitch(SwitchEntity):
             return "mdi:power-plug"
         return "mdi:power-plug-off"
 
-    # ── Actions ──────────────────────────────────────────────
-
-    async def async_turn_on(self, **kwargs) -> None:
-        """Turn on – always allowed, pass through."""
+    async def async_turn_on(self, **kwargs: Any) -> None:
+        """Turn on – always allowed."""
         await self.hass.services.async_call(
             "switch",
             "turn_on",
-            {"entity_id": self._plug_entity},
+            {"entity_id": self._manager.plug_entity},
             blocking=True,
         )
 
-    async def async_turn_off(self, **kwargs) -> None:
-        """Turn off – blocked if protection is active."""
+    async def async_turn_off(self, **kwargs: Any) -> None:
+        """Turn off – blocked while protection is active."""
         if self._manager.is_protected:
-            _LOGGER.warning(
-                "Turn-off via protected switch blocked for %s "
-                "(state: %s, power: %.1f W)",
-                self._plug_entity,
-                self._manager.protection_state,
-                self._manager.current_power,
-            )
-            # Don't forward the command. Original plug stays on.
-            # Show notification about the block.
-            if self._manager.enable_notification:
-                from homeassistant.components.persistent_notification import (
-                    async_create as pn_create,
-                )
-
-                friendly = self._manager._get_friendly_name()
-                pn_create(
-                    self.hass,
-                    (
-                        f"Turn-off of **{friendly}** was blocked!\n\n"
-                        f"Current power: {self._manager.current_power:.1f} W "
-                        f"(threshold: {self._manager.power_threshold} W)\n\n"
-                        f"Protection state: {self._manager.protection_state}"
-                    ),
-                    title="🛡️ Plug Protection",
-                    notification_id=(
-                        f"plug_protection_{self._entry.entry_id}"
-                    ),
+            self._manager.async_register_block("protected_switch")
+            if self._manager.raise_on_block:
+                raise ServiceValidationError(
+                    translation_domain=DOMAIN,
+                    translation_key="turn_off_blocked",
+                    translation_placeholders={"name": self._manager.plug_name},
                 )
             return
 
         await self.hass.services.async_call(
             "switch",
             "turn_off",
-            {"entity_id": self._plug_entity},
+            {"entity_id": self._manager.plug_entity},
             blocking=True,
         )
 
-    # ── Extra attributes ─────────────────────────────────────
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        """Expose protection details as attributes."""
+        m = self._manager
+        attrs: dict[str, Any] = {
+            ATTR_ORIGINAL_ENTITY: m.plug_entity,
+            ATTR_PROTECTED: m.is_protected,
+            ATTR_ENABLED: m.enabled,
+            ATTR_PROTECTION_STATE: m.protection_state,
+            ATTR_CURRENT_POWER: (
+                round(m.current_power, 1) if m.current_power is not None else None
+            ),
+            ATTR_POWER_THRESHOLD: m.power_threshold,
+            ATTR_COOLDOWN_TOTAL: m.cooldown_seconds,
+        }
+        if m.cooldown_end:
+            attrs[ATTR_COOLDOWN_END] = m.cooldown_end.isoformat()
+        if m.last_block_time:
+            attrs[ATTR_LAST_BLOCK_TIME] = m.last_block_time.isoformat()
+        return attrs
+
+
+class ProtectionEnabledSwitch(ProtectionEntity, SwitchEntity):
+    """Switch that turns the protection of this plug on or off."""
+
+    _attr_translation_key = "protection_enabled"
+
+    def __init__(self, manager: ProtectionManager) -> None:
+        super().__init__(manager, "protection_enabled")
 
     @property
-    def extra_state_attributes(self) -> dict:
-        """Expose protection details as attributes."""
-        attrs = {
-            ATTR_ORIGINAL_ENTITY: self._plug_entity,
-            ATTR_PROTECTED: self._manager.is_protected,
-            ATTR_PROTECTION_STATE: self._manager.protection_state,
-            ATTR_CURRENT_POWER: round(self._manager.current_power, 1),
-            ATTR_POWER_THRESHOLD: self._manager.power_threshold,
-            ATTR_COOLDOWN_TOTAL: self._manager.cooldown_seconds,
-            ATTR_COOLDOWN_REMAINING: self._manager.cooldown_remaining,
-        }
-        if self._manager.last_block_time:
-            attrs[ATTR_LAST_BLOCK_TIME] = (
-                self._manager.last_block_time.isoformat()
-            )
-        return attrs
+    def is_on(self) -> bool:
+        """True while protection is enabled."""
+        return self._manager.enabled
+
+    async def async_turn_on(self, **kwargs: Any) -> None:
+        """Enable protection."""
+        await self._manager.async_set_enabled(True)
+
+    async def async_turn_off(self, **kwargs: Any) -> None:
+        """Disable protection."""
+        await self._manager.async_set_enabled(False)

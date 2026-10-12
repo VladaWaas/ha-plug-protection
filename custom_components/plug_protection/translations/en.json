@@ -9,35 +9,95 @@
           "power_sensor": "Power sensor (W)",
           "power_threshold": "Power threshold (W)",
           "cooldown_seconds": "Cooldown after power drops (seconds)",
-          "enable_notification": "Show notification when blocked"
+          "enable_notification": "Show notification when blocked",
+          "raise_on_block": "Report an error when a turn-off is blocked"
         },
         "data_description": {
           "plug_entity": "The switch entity of the smart plug to protect.",
           "power_sensor": "Sensor reporting current power consumption in Watts.",
           "power_threshold": "Protection activates above this value. Typical: 5-10 W for washing machines, 15-30 W for 3D printers.",
-          "cooldown_seconds": "After power drops below threshold, protection stays active for this duration.",
-          "enable_notification": "Display a persistent notification when a turn-off attempt is blocked."
+          "cooldown_seconds": "After power drops below the threshold, protection stays active for this duration.",
+          "enable_notification": "Display a persistent notification when a turn-off attempt is blocked.",
+          "raise_on_block": "If on, turning the protected switch off while protected fails with an error (an automation stops at that action). If off, the command is silently ignored."
+        }
+      },
+      "reconfigure": {
+        "title": "Change protected plug",
+        "description": "Select a different plug or power sensor. Threshold and cooldown are changed under Configure.",
+        "data": {
+          "plug_entity": "Plug switch entity",
+          "power_sensor": "Power sensor (W)"
         }
       }
     },
     "error": {
-      "same_entity": "Plug entity and power sensor must be different entities."
+      "already_configured": "This plug is already protected."
     },
     "abort": {
-      "already_configured": "This plug is already protected."
+      "already_configured": "This plug is already protected.",
+      "reconfigure_successful": "Plug Protection was reconfigured."
     }
   },
   "options": {
     "step": {
       "init": {
-        "title": "Plug Protection Settings",
-        "description": "Adjust protection parameters. Changes take effect immediately.",
+        "title": "Plug Protection settings",
+        "description": "Adjust protection parameters. The integration reloads after saving; a running cooldown is kept.",
         "data": {
           "power_threshold": "Power threshold (W)",
           "cooldown_seconds": "Cooldown after power drops (seconds)",
-          "enable_notification": "Show notification when blocked"
+          "enable_notification": "Show notification when blocked",
+          "raise_on_block": "Report an error when a turn-off is blocked"
+        },
+        "data_description": {
+          "raise_on_block": "If on, turning the protected switch off while protected fails with an error (an automation stops at that action). If off, the command is silently ignored."
         }
       }
+    }
+  },
+  "entity": {
+    "switch": {
+      "protected_switch": {
+        "name": "Protected switch"
+      },
+      "protection_enabled": {
+        "name": "Protection enabled"
+      }
+    },
+    "sensor": {
+      "protection_status": {
+        "name": "Protection status",
+        "state": {
+          "active": "Active",
+          "cooldown": "Cooldown",
+          "idle": "Idle",
+          "disabled": "Disabled"
+        }
+      },
+      "cooldown_end": {
+        "name": "Cooldown ends"
+      }
+    }
+  },
+  "services": {
+    "force_off": {
+      "name": "Force off",
+      "description": "Turn off a protected plug, bypassing all protection. Use with caution – the plug is switched off regardless of power consumption or cooldown."
+    },
+    "reset_cooldown": {
+      "name": "Reset cooldown",
+      "description": "End a running cooldown immediately so the plug can be turned off normally."
+    }
+  },
+  "exceptions": {
+    "turn_off_blocked": {
+      "message": "Turn-off of {name} was blocked: the appliance is running."
+    }
+  },
+  "issues": {
+    "entity_missing": {
+      "title": "Plug Protection: entity not found",
+      "description": "The protection for \"{name}\" cannot work because these entities do not exist: {entities}.\n\nIf the plug or its power sensor was replaced, open Settings → Devices & services → Plug Protection and use **Reconfigure** to select the new entities."
     }
   }
 }

@@ -1,0 +1,11 @@
+force_off:
+  target:
+    entity:
+      integration: plug_protection
+      domain: switch
+
+reset_cooldown:
+  target:
+    entity:
+      integration: plug_protection
+      domain: switch
