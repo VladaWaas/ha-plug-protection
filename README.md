@@ -19,6 +19,7 @@ Requires Home Assistant **2026.3** or newer.
 - **Dual-layer protection** – a *protected switch* blocks turn-off from the UI and automations; a state listener catches turn-off from outside (physical button, Z2M, ZHA, …) and turns the plug back on (with retries)
 - **Per-plug "Protection enabled" switch** – disable the protection of one plug (and enable it again) without touching the others; the choice survives restarts
 - **Robust** – an unavailable power sensor does not drop the protection; renaming the plug or the sensor entity is followed automatically
+- **Hides the original plug** (optional) so only the protected switch gets used
 - **Clean UI** – entities join the device (and area) of the original plug, translated names, icon and logo, repair issue when an entity disappears
 - **Timestamp sensor** for the end of the cooldown (live countdown in the UI) and a `plug_protection_blocked` event
 - **UI configuration** incl. *Reconfigure* – no YAML
@@ -52,6 +53,7 @@ Repeat for every plug you want to protect. Threshold, cooldown and notification 
 | Power threshold | 10 W | Protection is active above this value |
 | Cooldown | 300 s | Protection stays on for this long after the power drops (0 = off) |
 | Notification | on | Persistent notification when a turn-off is blocked |
+| Hide the original plug entity | on (new entries) | Hides the original `switch` in dashboards and entity lists; only the protected switch is meant to be used |
 | Report an error when blocked | off | If on, turning the protected switch off fails with an error (an automation stops at that action); if off, the command is silently ignored |
 
 ### Recommended thresholds
@@ -90,6 +92,13 @@ power > threshold during the cooldown  → ACTIVE again
 A blocked turn-off that comes from *outside* (e.g. the physical button) has already cut the power for a moment. The integration turns the plug back on (up to 3 attempts), raises a notification if that fails, and runs a full cooldown afterwards because the appliance has just lost power.
 
 If the power sensor is unavailable, the current protection state is kept until it reports again. After a restart the previous state is restored: a running cooldown continues, an appliance that was running is treated as running until the sensor says otherwise.
+
+## 🔘 Physical button and the original entity
+
+Home Assistant cannot intercept a press on the plug's own button or a `switch.turn_off` aimed straight at the original entity. In those cases the plug really turns off for a moment and Plug Protection switches it back on (layer 2), so the appliance sees a short power cut. To avoid it:
+
+- Use the **protected switch** in dashboards, automations and scripts (hiding the original entity helps).
+- Turn on the plug's **child lock** (Zigbee2MQTT / ZHA entity `…_child_lock`) – the physical button then does nothing.
 
 ## 🛠️ Services
 

@@ -19,6 +19,7 @@ from homeassistant.helpers import selector
 from .const import (
     CONF_COOLDOWN_SECONDS,
     CONF_ENABLE_NOTIFICATION,
+    CONF_HIDE_ORIGINAL,
     CONF_PLUG_ENTITY,
     CONF_PLUG_REGISTRY_ID,
     CONF_POWER_REGISTRY_ID,
@@ -27,11 +28,12 @@ from .const import (
     CONF_RAISE_ON_BLOCK,
     DEFAULT_COOLDOWN_SECONDS,
     DEFAULT_ENABLE_NOTIFICATION,
+    DEFAULT_HIDE_ORIGINAL,
     DEFAULT_POWER_THRESHOLD,
     DEFAULT_RAISE_ON_BLOCK,
     DOMAIN,
 )
-from .manager import resolve_entity_id
+from .manager import async_set_original_hidden, resolve_entity_id
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -77,7 +79,16 @@ def _entity_schema(defaults: dict[str, Any] | None = None) -> dict:
 
 
 def _settings_schema(current: dict[str, Any] | None = None) -> dict:
-    """Threshold, cooldown and behaviour toggles (setup and options)."""
+    """Threshold, cooldown and behaviour toggles (setup and options).
+
+    `current` is None while creating an entry. Existing entries without the
+    "hide original" key keep it off.
+    """
+    hide_default = (
+        DEFAULT_HIDE_ORIGINAL
+        if current is None
+        else current.get(CONF_HIDE_ORIGINAL, False)
+    )
     current = current or {}
     return {
         vol.Required(
@@ -95,6 +106,9 @@ def _settings_schema(current: dict[str, Any] | None = None) -> dict:
         vol.Required(
             CONF_RAISE_ON_BLOCK,
             default=current.get(CONF_RAISE_ON_BLOCK, DEFAULT_RAISE_ON_BLOCK),
+        ): selector.BooleanSelector(),
+        vol.Required(
+            CONF_HIDE_ORIGINAL, default=hide_default
         ): selector.BooleanSelector(),
     }
 
@@ -168,6 +182,13 @@ class PlugProtectionConfigFlow(ConfigFlow, domain=DOMAIN):
             if self._plug_in_use(plug_reg_id or plug, entry.entry_id):
                 errors["base"] = "already_configured"
             else:
+                old_plug = resolve_entity_id(
+                    self.hass,
+                    entry.data.get(CONF_PLUG_REGISTRY_ID),
+                    entry.data[CONF_PLUG_ENTITY],
+                )
+                if old_plug != plug:
+                    async_set_original_hidden(self.hass, old_plug, False)
                 return self.async_update_reload_and_abort(
                     entry,
                     unique_id=plug_reg_id or plug,

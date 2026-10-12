@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.3.0
+
+### New
+- **Hide the original plug entity** (new option, on by default for new entries): the original `switch` is hidden in dashboards and entity lists so that only the protected switch is used. Only the "hidden by integration" flag is managed – an entity you hid or unhid yourself is never touched. The entity is shown again when you turn the option off or delete the entry. Existing entries keep the plug visible until you enable the option under **Configure**.
+
 ## 1.2.0
 
 ### New

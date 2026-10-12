@@ -419,3 +419,42 @@ async def test_removing_entry_cleans_up(hass, plug, setup_entry):
     assert await hass.config_entries.async_remove(entry.entry_id)
     await hass.async_block_till_done()
     assert not er.async_entries_for_config_entry(er.async_get(hass), entry.entry_id)
+
+
+# ── Hide original entity ─────────────────────────────────────
+
+
+async def test_original_hidden_and_restored(hass, plug, setup_entry):
+    reg = er.async_get(hass)
+    entry = await setup_entry(hide_original=True)
+    assert reg.async_get(PLUG).hidden_by is er.RegistryEntryHider.INTEGRATION
+
+    # turning the option off gives the entity back
+    hass.config_entries.async_update_entry(entry, options={"hide_original": False})
+    await hass.async_block_till_done(wait_background_tasks=True)
+    assert reg.async_get(PLUG).hidden_by is None
+
+
+async def test_original_unhidden_when_entry_removed(hass, plug, setup_entry):
+    reg = er.async_get(hass)
+    entry = await setup_entry(hide_original=True)
+    assert reg.async_get(PLUG).hidden_by is er.RegistryEntryHider.INTEGRATION
+    assert await hass.config_entries.async_remove(entry.entry_id)
+    await hass.async_block_till_done()
+    assert reg.async_get(PLUG).hidden_by is None
+
+
+async def test_user_hidden_entity_is_never_touched(hass, plug, setup_entry):
+    reg = er.async_get(hass)
+    reg.async_update_entity(PLUG, hidden_by=er.RegistryEntryHider.USER)
+    entry = await setup_entry(hide_original=True)
+    assert reg.async_get(PLUG).hidden_by is er.RegistryEntryHider.USER
+    assert await hass.config_entries.async_remove(entry.entry_id)
+    await hass.async_block_till_done()
+    assert reg.async_get(PLUG).hidden_by is er.RegistryEntryHider.USER
+
+
+async def test_existing_entries_stay_visible(hass, plug, setup_entry):
+    """Entries from before 1.3 have no hide_original key → plug stays visible."""
+    await setup_entry()
+    assert er.async_get(hass).async_get(PLUG).hidden_by is None

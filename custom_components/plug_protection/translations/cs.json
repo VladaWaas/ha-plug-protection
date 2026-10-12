@@ -10,7 +10,8 @@
           "power_threshold": "Mezní příkon (W)",
           "cooldown_seconds": "Prodleva po poklesu příkonu (sekundy)",
           "enable_notification": "Zobrazit notifikaci při zablokování",
-          "raise_on_block": "Hlásit chybu při zablokovaném vypnutí"
+          "raise_on_block": "Hlásit chybu při zablokovaném vypnutí",
+          "hide_original": "Skrýt původní entitu zásuvky"
         },
         "data_description": {
           "plug_entity": "Switch entita chytré zásuvky, kterou chcete chránit.",
@@ -18,7 +19,8 @@
           "power_threshold": "Ochrana se aktivuje při překročení této hodnoty. Typicky: 5-10 W pračka, 15-30 W 3D tiskárna.",
           "cooldown_seconds": "Po poklesu příkonu pod práh zůstane ochrana aktivní po tuto dobu. Chrání proti pauzám v cyklu spotřebiče.",
           "enable_notification": "Zobrazí notifikaci při zablokování pokusu o vypnutí.",
-          "raise_on_block": "Pokud je zapnuto, vypnutí chráněného vypínače při aktivní ochraně skončí chybou (automatizace se na této akci zastaví). Pokud je vypnuto, příkaz se tiše ignoruje."
+          "raise_on_block": "Pokud je zapnuto, vypnutí chráněného vypínače při aktivní ochraně skončí chybou (automatizace se na této akci zastaví). Pokud je vypnuto, příkaz se tiše ignoruje.",
+          "hide_original": "Skryje původní vypínač v dashboardech a seznamech, aby se používal jen chráněný vypínač. Automatizace na něj stále mohou cílit, ale tím se obchází první vrstva ochrany (zásuvka se vypne a znovu zapne)."
         }
       },
       "reconfigure": {
@@ -47,10 +49,12 @@
           "power_threshold": "Mezní příkon (W)",
           "cooldown_seconds": "Prodleva po poklesu příkonu (sekundy)",
           "enable_notification": "Zobrazit notifikaci při zablokování",
-          "raise_on_block": "Hlásit chybu při zablokovaném vypnutí"
+          "raise_on_block": "Hlásit chybu při zablokovaném vypnutí",
+          "hide_original": "Skrýt původní entitu zásuvky"
         },
         "data_description": {
-          "raise_on_block": "Pokud je zapnuto, vypnutí chráněného vypínače při aktivní ochraně skončí chybou (automatizace se na této akci zastaví). Pokud je vypnuto, příkaz se tiše ignoruje."
+          "raise_on_block": "Pokud je zapnuto, vypnutí chráněného vypínače při aktivní ochraně skončí chybou (automatizace se na této akci zastaví). Pokud je vypnuto, příkaz se tiše ignoruje.",
+          "hide_original": "Skryje původní vypínač v dashboardech a seznamech, aby se používal jen chráněný vypínač. Automatizace na něj stále mohou cílit, ale tím se obchází první vrstva ochrany (zásuvka se vypne a znovu zapne)."
         }
       }
     }

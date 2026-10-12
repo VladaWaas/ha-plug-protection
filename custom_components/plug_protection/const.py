@@ -14,12 +14,14 @@ CONF_POWER_THRESHOLD = "power_threshold"
 CONF_COOLDOWN_SECONDS = "cooldown_seconds"
 CONF_ENABLE_NOTIFICATION = "enable_notification"
 CONF_RAISE_ON_BLOCK = "raise_on_block"
+CONF_HIDE_ORIGINAL = "hide_original"
 
 # ── Defaults ─────────────────────────────────────────────────
 DEFAULT_POWER_THRESHOLD = 10  # Watts
 DEFAULT_COOLDOWN_SECONDS = 300  # 5 minutes
 DEFAULT_ENABLE_NOTIFICATION = True
 DEFAULT_RAISE_ON_BLOCK = False
+DEFAULT_HIDE_ORIGINAL = True  # for new entries; existing entries keep "off"
 
 # ── Services ─────────────────────────────────────────────────
 SERVICE_FORCE_OFF = "force_off"

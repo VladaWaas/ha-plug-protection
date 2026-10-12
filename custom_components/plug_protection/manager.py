@@ -45,6 +45,7 @@ from homeassistant.util import dt as dt_util
 from .const import (
     CONF_COOLDOWN_SECONDS,
     CONF_ENABLE_NOTIFICATION,
+    CONF_HIDE_ORIGINAL,
     CONF_PLUG_ENTITY,
     CONF_PLUG_REGISTRY_ID,
     CONF_POWER_REGISTRY_ID,
@@ -88,6 +89,29 @@ def resolve_entity_id(
         if entry is not None:
             return entry.entity_id
     return fallback
+
+
+@callback
+def async_set_original_hidden(
+    hass: HomeAssistant, entity: str | None, hidden: bool
+) -> None:
+    """Hide / unhide the original plug in the entity registry.
+
+    Only touches the "hidden by integration" flag: an entity the user hid
+    (or unhid) themselves is never changed.
+    """
+    if not entity:
+        return
+    registry = er.async_get(hass)
+    entry = registry.async_get(entity)
+    if entry is None:
+        return
+    if hidden and entry.hidden_by is None:
+        registry.async_update_entity(
+            entry.entity_id, hidden_by=er.RegistryEntryHider.INTEGRATION
+        )
+    elif not hidden and entry.hidden_by is er.RegistryEntryHider.INTEGRATION:
+        registry.async_update_entity(entry.entity_id, hidden_by=None)
 
 
 def _parse_dt(value: Any) -> datetime | None:
@@ -134,6 +158,8 @@ class ProtectionManager:
         self.raise_on_block: bool = self._setting(
             CONF_RAISE_ON_BLOCK, DEFAULT_RAISE_ON_BLOCK
         )
+        # entries created before 1.3 have no such key → keep the plug visible
+        self.hide_original: bool = self._setting(CONF_HIDE_ORIGINAL, False)
 
         # Runtime state
         self._enabled = True
@@ -283,6 +309,7 @@ class ProtectionManager:
     async def async_remove_data(self) -> None:
         """Delete persisted data when the config entry is removed."""
         await self._store.async_remove()
+        async_set_original_hidden(self.hass, self.plug_entity, False)
         ir.async_delete_issue(self.hass, DOMAIN, self._issue_id)
         pn_dismiss(self.hass, self._notification_id)
 
@@ -313,6 +340,7 @@ class ProtectionManager:
         )
         self._listeners.append(async_at_started(self.hass, self._async_check_entities))
 
+        async_set_original_hidden(self.hass, self.plug_entity, self.hide_original)
         self._restore_state()
         self._fire_update()
 

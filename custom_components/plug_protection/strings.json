@@ -10,7 +10,8 @@
           "power_threshold": "Power threshold (W)",
           "cooldown_seconds": "Cooldown after power drops (seconds)",
           "enable_notification": "Show notification when blocked",
-          "raise_on_block": "Report an error when a turn-off is blocked"
+          "raise_on_block": "Report an error when a turn-off is blocked",
+          "hide_original": "Hide the original plug entity"
         },
         "data_description": {
           "plug_entity": "The switch entity of the smart plug to protect.",
@@ -18,7 +19,8 @@
           "power_threshold": "Protection activates above this value. Typical: 5-10 W for washing machines, 15-30 W for 3D printers.",
           "cooldown_seconds": "After power drops below the threshold, protection stays active for this duration.",
           "enable_notification": "Display a persistent notification when a turn-off attempt is blocked.",
-          "raise_on_block": "If on, turning the protected switch off while protected fails with an error (an automation stops at that action). If off, the command is silently ignored."
+          "raise_on_block": "If on, turning the protected switch off while protected fails with an error (an automation stops at that action). If off, the command is silently ignored.",
+          "hide_original": "Hides the original switch in dashboards and lists so that only the protected switch is used. Automations can still target it, but that bypasses the first protection layer (the plug is switched off and turned back on)."
         }
       },
       "reconfigure": {
@@ -47,10 +49,12 @@
           "power_threshold": "Power threshold (W)",
           "cooldown_seconds": "Cooldown after power drops (seconds)",
           "enable_notification": "Show notification when blocked",
-          "raise_on_block": "Report an error when a turn-off is blocked"
+          "raise_on_block": "Report an error when a turn-off is blocked",
+          "hide_original": "Hide the original plug entity"
         },
         "data_description": {
-          "raise_on_block": "If on, turning the protected switch off while protected fails with an error (an automation stops at that action). If off, the command is silently ignored."
+          "raise_on_block": "If on, turning the protected switch off while protected fails with an error (an automation stops at that action). If off, the command is silently ignored.",
+          "hide_original": "Hides the original switch in dashboards and lists so that only the protected switch is used. Automations can still target it, but that bypasses the first protection layer (the plug is switched off and turned back on)."
         }
       }
     }

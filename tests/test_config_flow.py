@@ -16,6 +16,7 @@ USER_INPUT = {
     "cooldown_seconds": 200,
     "enable_notification": True,
     "raise_on_block": False,
+    "hide_original": True,
 }
 
 
