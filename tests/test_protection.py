@@ -458,3 +458,39 @@ async def test_existing_entries_stay_visible(hass, plug, setup_entry):
     """Entries from before 1.3 have no hide_original key → plug stays visible."""
     await setup_entry()
     assert er.async_get(hass).async_get(PLUG).hidden_by is None
+
+
+async def test_plug_without_device_gets_own_device(hass, plug, setup_entry):
+    entry = await setup_entry()
+    ent = er.async_get(hass).async_get(eid(hass, entry, "protected_switch"))
+    device = dr.async_get(hass).async_get(ent.device_id)
+    assert (DOMAIN, entry.entry_id) in device.identifiers
+
+
+async def test_unused_own_device_is_removed_after_linking(
+    hass, plug, registry_ids, setup_entry
+):
+    """Entities moving to the plug's device must not leave an empty device behind."""
+    from pytest_homeassistant_custom_component.common import MockConfigEntry
+
+    entry = await setup_entry()  # no device yet → own device is created
+    own = er.async_get(hass).async_get(eid(hass, entry, "protected_switch")).device_id
+
+    host = MockConfigEntry(domain="test")
+    host.add_to_hass(hass)
+    device = dr.async_get(hass).async_get_or_create(
+        config_entry_id=host.entry_id,
+        identifiers={("test", "washer")},
+        name="Washer plug",
+    )
+    er.async_get(hass).async_update_entity(
+        PLUG, device_id=device.id
+    )  # plug moves → reload
+    await hass.async_block_till_done(wait_background_tasks=True)
+    await hass.async_block_till_done(wait_background_tasks=True)
+
+    assert (
+        er.async_get(hass).async_get(eid(hass, entry, "protected_switch")).device_id
+        == device.id
+    )
+    assert dr.async_get(hass).async_get(own) is None

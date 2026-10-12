@@ -17,7 +17,13 @@ class ProtectionEntity(Entity):
     def __init__(self, manager: ProtectionManager, suffix: str) -> None:
         self._manager = manager
         self._attr_unique_id = f"{manager.entry.entry_id}_{suffix}"
-        self._attr_device_info = manager.device_info
+        # Link to the device of the original plug (the pattern for helpers since
+        # HA 2026.8: set `device_entry`, never return another integration's
+        # identifiers from device_info). Plugs without a device get their own.
+        if (source := manager.source_device) is not None:
+            self.device_entry = source
+        else:
+            self._attr_device_info = manager.own_device_info
 
     async def async_added_to_hass(self) -> None:
         """Subscribe to manager updates."""

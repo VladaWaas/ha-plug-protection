@@ -35,6 +35,9 @@ async def async_setup_entry(
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
+    # Entities may have moved from our own device to the plug's device
+    manager.async_remove_unused_devices()
+
     # Start listening after the platforms are ready
     await manager.async_start()
 

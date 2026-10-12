@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.3.1
+
+### Fixed
+- Entities are attached to the device of the original plug again on Home Assistant 2026.8 and newer (they ended up on a separate "Plug Protection" device there, because the old linking helpers no longer work). Plugs without a device keep getting their own device. Unused devices left behind by older versions are removed automatically, and the entry reloads if the plug moves to another device.
+- CI: newer GitHub Actions versions.
+
 ## 1.3.0
 
 ### New

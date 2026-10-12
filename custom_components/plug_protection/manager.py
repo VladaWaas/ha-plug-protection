@@ -26,6 +26,9 @@ from homeassistant.helpers import (
     device as dr_helper,
 )
 from homeassistant.helpers import (
+    device_registry as dr,
+)
+from homeassistant.helpers import (
     entity_registry as er,
 )
 from homeassistant.helpers import (
@@ -230,20 +233,36 @@ class ProtectionManager:
         return self.entry.title or self.plug_entity
 
     @property
-    def device_info(self) -> DeviceInfo:
-        """Attach entities to the device of the original plug if it has one."""
-        linked = dr_helper.async_device_info_to_link_from_entity(
+    def source_device(self) -> dr.DeviceEntry | None:
+        """Device of the original plug (None if the plug has no device)."""
+        return dr_helper.async_entity_id_to_device(
             self.hass,
             self.entry.data.get(CONF_PLUG_REGISTRY_ID) or self.plug_entity,
         )
-        if linked is not None:
-            return linked
+
+    @property
+    def own_device_info(self) -> DeviceInfo:
+        """Device for plugs that do not belong to any device."""
         return DeviceInfo(
             identifiers={(DOMAIN, self.entry.entry_id)},
             name=self.entry.title,
             manufacturer="Plug Protection",
             model="Protected Smart Plug",
         )
+
+    @callback
+    def async_remove_unused_devices(self) -> None:
+        """Remove our own devices that no entity uses (e.g. after linking to the plug's device)."""
+        dev_reg = dr.async_get(self.hass)
+        ent_reg = er.async_get(self.hass)
+        for device in dr.async_entries_for_config_entry(dev_reg, self.entry.entry_id):
+            if not any(ident[0] == DOMAIN for ident in device.identifiers) or any(
+                ent.config_entry_id == self.entry.entry_id
+                for ent in er.async_entries_for_device(ent_reg, device.id)
+            ):
+                continue
+            _LOGGER.debug("Removing unused device %s", device.name)
+            dev_reg.async_remove_device(device.id)
 
     # ── Helpers ──────────────────────────────────────────────
 
@@ -585,12 +604,20 @@ class ProtectionManager:
     def _async_on_registry_update(self, event: Event) -> None:
         """Entity registry changed for the plug or the power sensor."""
         action = event.data.get("action")
-        if action == "update" and "entity_id" in event.data.get("changes", {}):
+        changes = event.data.get("changes", {})
+        if action == "update" and "entity_id" in changes:
             _LOGGER.info(
                 "Entity renamed %s → %s, reloading Plug Protection",
-                event.data["changes"]["entity_id"],
+                changes["entity_id"],
                 event.data["entity_id"],
             )
+            self.hass.config_entries.async_schedule_reload(self.entry.entry_id)
+        elif (
+            action == "update"
+            and "device_id" in changes
+            and event.data["entity_id"] == self.plug_entity
+        ):
+            _LOGGER.info("Plug moved to another device, reloading Plug Protection")
             self.hass.config_entries.async_schedule_reload(self.entry.entry_id)
         elif action == "remove":
             # the entity's state disappears a moment later – check then
